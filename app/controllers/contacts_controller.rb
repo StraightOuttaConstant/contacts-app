@@ -1,6 +1,12 @@
 class ContactsController < ApplicationController
   def index
     contacts = Contact.all
+
+    search_term = params[:search]
+    if search_term
+      contacts = contacts.where("first_name iLIKE ? OR last_name iLIKE ?", "%#{search_term}%")
+    end
+    
     render json: contacts.as_json
   end
 
@@ -13,8 +19,11 @@ class ContactsController < ApplicationController
                           bio: params[:bio],
                           phone_number: params[:phone_number]
                           )
-    contact.save
-    render json: contact.as_json
+    if contact.save
+      render json: contact.as_json
+    else
+      render json: {errors: contact.errors.full_messages}, status: :unprocessable_entity
+    end
   end
 
   def show
@@ -31,9 +40,12 @@ class ContactsController < ApplicationController
     contact.email = params[:email] || contact.email
     contact.bio = params[:bio] || contact.bio
     contact.phone_number = params[:phone_number] || contact.phone_number
-    contact.save
-
-    render json: contact.as_json
+    
+    if contact.save
+      render json: contact.as_json
+    else
+      render json: {errors: contact.errors.full_messages}, status: :unprocessable_entity
+    end
   end
 
   def destroy
